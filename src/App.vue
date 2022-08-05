@@ -1,9 +1,12 @@
 <template>
   <div id="app">
+
     <div class="overlay"></div>
+
     <main>
 
       <form>
+
         <input 
           class="search"
           type="text"
@@ -11,28 +14,47 @@
           v-model="location"
           @keydown.enter.prevent="getWeather"
         />
+
         <button @click.prevent="getWeather">Buscar</button>
+
       </form>
+      
+      <transition>
 
-      <div class="info" v-if="responseData.base">
-        <h1>{{responseData.name}}, {{responseData.sys.country}}</h1>
-        <p class="data">{{diaAtual}}</p>
-        <p class="temp">{{Math.round(responseData.main.temp)}}ºC</p>
-        <p class="description">{{responseData.weather[0].description}}</p>
-        <div class="icon">
-          <img :src="`http://openweathermap.org/img/wn/${responseData.weather[0].icon}@2x.png`">
+        <div class="info" v-if="responseData.base">
+          <h1>{{responseData.name}}, {{responseData.sys.country}}</h1>
+          <p class="data">{{diaAtual}}</p>
+          <div class="temp">
+            <p class="main-temp">{{Math.round(responseData.main.temp)}}ºC</p>
+            <p class="secondary-temp"><span>Máx.</span> {{Math.round(responseData.main.temp_max)}}Cº</p>
+            <p class="secondary-temp"><span>Min.</span> {{Math.round(responseData.main.temp_min)}}Cº</p>
+          </div>
+          <p class="description">{{responseData.weather[0].description}}</p>
+          <p class="humidity">Humidade do ar {{responseData.main.humidity}}%</p>
+          <div class="icon">
+            <img :src="`http://openweathermap.org/img/wn/${responseData.weather[0].icon}@2x.png`">
+          </div>
+          <p>{{responseData.message}}</p>
         </div>
-        <p>{{responseData.message}}</p>
-      </div>
 
-      <div v-else-if="responseData.message">
-        <p class="error">Erro: localização não encontrada.</p>
-      </div>
+        <div v-else-if="responseData.message">
+          <p class="error">Erro: localização não encontrada.</p>
+        </div>
+
+
+      </transition>
+
+      <LoadingPage v-if="loading" />
+
     </main>
+
   </div>
+
 </template>
 
 <script>
+import LoadingPage from '@/components/Loading.vue'
+
 const now = new Date();
 const daysArray = ['dom','seg','ter','qua','qui','sex','sab'];
 const monthsArray = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -44,7 +66,11 @@ export default {
       location: '',
       api: 'eb9f08d66580680f98b067338772bcb0',
       responseData: {},
+      loading: false,
     };
+  },
+  components:{
+    LoadingPage,
   },
   computed:{
     diaAtual(){
@@ -59,17 +85,23 @@ export default {
     getWeather(){
       this.responseData = {};
       if(this.location.length){
+        this.loading = true;
         try{
           fetch(`https://api.openweathermap.org/data/2.5/weather?q=${this.location}&appid=${this.api}&units=metric&lang=pt_br`)
           .then(res => res.json())
           .then(json => {
-            if(json.cod === 200) this.responseData = json
-            else if(json.cod === '404') this.responseData = json
-            console.log(this.responseData)
+            if(json.cod === 200) {
+              this.loading = false;
+              this.responseData = json;
+            }
+            else if(json.cod === '404') {
+              this.loading = false;
+              this.responseData = json;
+            } 
           })
         }
         catch(error){
-          console.log(error)
+          console.log(error);
         }
       }
     }
@@ -85,8 +117,9 @@ export default {
 }
 #app {
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
   background-image: url(./assets/background.jpg);
+  background-repeat: no-repeat;
   background-size: cover;
   background-position: center bottom;
   display: grid;
@@ -94,7 +127,7 @@ export default {
 }
 .overlay {
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
   background-color: rgba(0, 0, 0, 0.5);
   grid-column: 1;
   grid-row: 1;
@@ -106,7 +139,7 @@ main {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  height: 100vh;
+  /* height: 100vh; */
   padding: 5rem;
 }
 form{
@@ -151,11 +184,27 @@ form button:active{
   font-weight: 900;
   text-shadow: 4px 6px rgba(0, 0, 0, 0.2);
   background-color: rgba(255, 255, 255, .1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   border-radius: 10px;
   padding: 15px 30px;
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  justify-items: center;
+  gap: 20px;
+}
+.temp .main-temp{
+  grid-row: 1;
+  grid-column: 1/-1;
+}
+.temp .secondary-temp{
+  font-size: 1.5rem;
+  text-shadow: none;
+}
+.temp span{
+  font-size: 1rem;
+  grid-row: 2;
+}
+.humidity{
+  font-size: 1.1rem;
 }
 .description{
   font-size: 1.5rem;
@@ -169,6 +218,14 @@ form button:active{
 .error{
   color: white;
   font-size: 1rem;
+}
+.v-enter-active,
+.v-leave-active{
+  transition: opacity 3s;
+}
+.v-enter,
+.v-leave-to{
+  opacity: 1;
 }
 @media screen and (max-width:600px) {
   main{
