@@ -6,25 +6,31 @@
         <input 
           class="search"
           type="text"
-          placeholder="Type here and press Enter"
+          placeholder="Digite o local e pressione Enter"
           v-model="location"
           @keydown.enter="getWeather"
         />
       </div>
 
       <div class="info" v-if="responseData">
-        
         <h1>{{responseData.name}}, {{responseData.sys.country}}</h1>
-        <p>Quinta, 04 de agosto de 2022</p>
-        <!-- <div class="temp">22 ºC</div> -->
+        <p class="data">{{diaAtual}}</p>
         <p class="temp">{{Math.round(responseData.main.temp)}}ºC</p>
         <p class="description">{{responseData.weather[0].description}}</p>
+        <div class="icon">
+          <img :src="`http://openweathermap.org/img/wn/${responseData.weather[0].icon}@2x.png`">
+        </div>
       </div>
+
     </main>
   </div>
 </template>
 
 <script>
+const now = new Date();
+const daysArray = ['dom','seg','ter','qua','qui','sex','sab'];
+const monthsArray = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
 export default {
   name: 'App',
   data() {
@@ -33,6 +39,15 @@ export default {
       api: 'eb9f08d66580680f98b067338772bcb0',
       responseData: null,
     };
+  },
+  computed:{
+    diaAtual(){
+      const hoje = daysArray[now.getDay()];
+      const diaMes = now.getDate();
+      const mes = monthsArray[now.getMonth()];
+      const ano = now.getFullYear();
+      return `${hoje}, ${diaMes} de ${mes} de ${ano}`
+    }
   },
   methods:{
     getWeather(){
@@ -93,6 +108,10 @@ main {
 }
 .info{
   color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 .temp{
   font-size: 5rem;
@@ -102,7 +121,15 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 20px;
   border-radius: 10px;
+  padding: 15px 30px;
+}
+.description{
+  font-size: 1.2rem;
+  text-align: center;
+  text-transform: capitalize;
+}
+.data{
+  text-transform: uppercase;
 }
 </style>
