@@ -2,17 +2,19 @@
   <div id="app">
     <div class="overlay"></div>
     <main>
-      <div>
+
+      <form>
         <input 
           class="search"
           type="text"
           placeholder="Digite o local e pressione Enter"
           v-model="location"
-          @keydown.enter="getWeather"
+          @keydown.enter.prevent="getWeather"
         />
-      </div>
+        <button @click.prevent="getWeather">Buscar</button>
+      </form>
 
-      <div class="info" v-if="responseData">
+      <div class="info" v-if="responseData.base">
         <h1>{{responseData.name}}, {{responseData.sys.country}}</h1>
         <p class="data">{{diaAtual}}</p>
         <p class="temp">{{Math.round(responseData.main.temp)}}ºC</p>
@@ -20,8 +22,12 @@
         <div class="icon">
           <img :src="`http://openweathermap.org/img/wn/${responseData.weather[0].icon}@2x.png`">
         </div>
+        <p>{{responseData.message}}</p>
       </div>
 
+      <div v-else-if="responseData.message">
+        <p class="error">Erro: localização não encontrada.</p>
+      </div>
     </main>
   </div>
 </template>
@@ -37,7 +43,7 @@ export default {
     return {
       location: '',
       api: 'eb9f08d66580680f98b067338772bcb0',
-      responseData: null,
+      responseData: {},
     };
   },
   computed:{
@@ -46,17 +52,26 @@ export default {
       const diaMes = now.getDate();
       const mes = monthsArray[now.getMonth()];
       const ano = now.getFullYear();
-      return `${hoje}, ${diaMes} de ${mes} de ${ano}`
+      return `${hoje}, ${diaMes} de ${mes} de ${ano}, ${now.getHours()}:${now.getMinutes()}`
     }
   },
   methods:{
     getWeather(){
-      fetch(`https://api.openweathermap.org/data/2.5/weather?q=${this.location}&appid=${this.api}&units=metric&lang=pt_br`)
-        .then(res => res.json())
-        .then(json => {
-          this.responseData = json
-          console.log(json)
-        })
+      this.responseData = {};
+      if(this.location.length){
+        try{
+          fetch(`https://api.openweathermap.org/data/2.5/weather?q=${this.location}&appid=${this.api}&units=metric&lang=pt_br`)
+          .then(res => res.json())
+          .then(json => {
+            if(json.cod === 200) this.responseData = json
+            else if(json.cod === '404') this.responseData = json
+            console.log(this.responseData)
+          })
+        }
+        catch(error){
+          console.log(error)
+        }
+      }
     }
   }
 };
@@ -94,6 +109,25 @@ main {
   height: 100vh;
   padding: 5rem;
 }
+form{
+  display: grid;
+  gap: 20px;
+  justify-items: center;
+}
+form button{
+  width: 100px;
+  padding: 10px 15px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 50px;
+  transition: .3s;
+}
+form button:hover,
+form button:active{
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .6);
+}
 .search{
   padding: 10px 15px;
   width: 300px;
@@ -103,7 +137,6 @@ main {
   border: none;
   outline: none;
   text-align: center;
-  margin-bottom: 50px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 .info{
@@ -117,7 +150,7 @@ main {
   font-size: 5rem;
   font-weight: 900;
   text-shadow: 4px 6px rgba(0, 0, 0, 0.2);
-  background-color: rgba(255, 255, 255, .2);
+  background-color: rgba(255, 255, 255, .1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -125,11 +158,30 @@ main {
   padding: 15px 30px;
 }
 .description{
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   text-align: center;
   text-transform: capitalize;
 }
 .data{
   text-transform: uppercase;
+  font-weight: bold;
+}
+.error{
+  color: white;
+  font-size: 1rem;
+}
+@media screen and (max-width:600px) {
+  main{
+    padding: 20px;
+  }
+  form{
+    margin-top: 50px;
+  }
+  form button:hover{
+    box-shadow: unset;
+  }
+  .search{
+    font-size: 1.1rem;
+  }
 }
 </style>
