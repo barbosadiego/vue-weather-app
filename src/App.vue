@@ -19,9 +19,9 @@
 
       </form>
       
-      <transition>
+      <transition mode="out-in">
 
-        <div class="info" v-if="responseData.base">
+        <div class="info" v-if="responseData.base" key="info">
           <h1>{{responseData.name}}, {{responseData.sys.country}}</h1>
           <p class="data">{{diaAtual}}</p>
           <div class="temp">
@@ -37,10 +37,9 @@
           <p>{{responseData.message}}</p>
         </div>
 
-        <div v-else-if="responseData.message">
+        <div v-else-if="responseData.message" key="message">
           <p class="error">Erro: localização não encontrada.</p>
         </div>
-
 
       </transition>
 
@@ -93,10 +92,12 @@ export default {
             if(json.cod === 200) {
               this.loading = false;
               this.responseData = json;
+              this.location = '';
             }
             else if(json.cod === '404') {
               this.loading = false;
               this.responseData = json;
+              this.location = '';
             } 
           })
         }
@@ -139,7 +140,6 @@ main {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  /* height: 100vh; */
   padding: 5rem;
 }
 form{
@@ -219,13 +219,16 @@ form button:active{
   color: white;
   font-size: 1rem;
 }
-.v-enter-active,
-.v-leave-active{
-  transition: opacity 3s;
-}
 .v-enter,
 .v-leave-to{
-  opacity: 1;
+  opacity: 0;
+}
+.v-enter{
+  transform: translate3d(0,-20px,0);
+}
+.v-enter-active,
+.v-leave-active{
+  transition: all .3s;
 }
 @media screen and (max-width:600px) {
   main{
